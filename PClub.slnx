@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/backend/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/backend/src/">
+    <Project Path="backend/src/PClub.Api/PClub.Api.csproj" />
+    <Project Path="backend/src/PClub.Application/PClub.Application.csproj" />
+    <Project Path="backend/src/PClub.Domain/PClub.Domain.csproj" />
+    <Project Path="backend/src/PClub.Infrastructure/PClub.Infrastructure.csproj" />
+  </Folder>
+</Solution>

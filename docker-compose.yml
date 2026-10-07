@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: pclub-postgres
+    environment:
+      POSTGRES_DB: pclub
+      POSTGRES_USER: pclub
+      POSTGRES_PASSWORD: local-dev-only
+    ports:
+      # Слева — порт на твоей машине, справа — внутри контейнера.
+      # 5432 на хосте занят базой готового проекта CyberDesk, поэтому
+      # снаружи эта база доступна на 5433. Внутри контейнера — обычный
+      # 5432, его менять не надо.
+      # ВАЖНО: Port=5433 должен стоять и в строке подключения.
+      - "5433:5432"
+    volumes:
+      # Данные живут в именованном томе, а не внутри контейнера.
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # Команда, по которой Docker понимает: база готова принимать соединения.
+      test: ["CMD-SHELL", "pg_isready -U pclub -d pclub"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

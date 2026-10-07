@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Target Name="EnsureDomainHasNoDependencies" BeforeTargets="Build">
+    <Error Condition="'@(PackageReference)' != ''" Text="PClub.Domain не должен ссылаться на NuGet-пакеты. Правила предметной области не зависят ни от какой библиотеки." />
+  </Target>
+
+</Project>
