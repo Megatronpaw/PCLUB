@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PClub.Application.Abstractions;
+﻿using PClub.Application.Abstractions;
 using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 

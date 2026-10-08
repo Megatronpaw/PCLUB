@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PClub.Domain.Entities;
 
 namespace PClub.Infrastructure.Persistence
@@ -23,7 +20,8 @@ namespace PClub.Infrastructure.Persistence
         {
 
         }
-
+        /// <summary>Пользователи</summary>
+        public DbSet<User> Users => Set<User>();
         /// <summary>Клубы.</summary>
         public DbSet<Club> Clubs => Set<Club>();
         /// <summary>Зоны.</summary>

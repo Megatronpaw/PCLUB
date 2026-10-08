@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace PClub.Domain.Exceptions
 {
     ///<summary>Данные не проходят преданные области. Станет HTTP 400.</summary>

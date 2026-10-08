@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PClub.Application.Clubs;
-using PClub.Domain.Entities;
+﻿using PClub.Domain.Entities;
 
 namespace PClub.Application.Clubs
 {
@@ -51,5 +47,12 @@ namespace PClub.Application.Clubs
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Клуб или <c>null</c>, если такого нет.</returns>
         Task<Club?> GetTrackedAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>Место вместе с зоной и клубом.</summary>
+        /// <param name="seatId">Идентификатор места.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Место или <c>null</c>, если такого нет.</returns>
+        Task<Seat?> GetSeatWithContextAsync(
+            Guid seatId, CancellationToken cancellationToken = default);
     }
 }

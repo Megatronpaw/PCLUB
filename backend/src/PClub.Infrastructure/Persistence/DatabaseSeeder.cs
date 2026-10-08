@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PClub.Domain.Entities;
 using PClub.Domain.Enums;
 
@@ -29,6 +26,17 @@ namespace PClub.Infrastructure.Persistence
         /// </remarks>
         public async Task SeedAsync(CancellationToken cancellationToken = default)
         {
+            if (!await _db.Users.AnyAsync(cancellationToken))
+            {
+                _db.Users.AddRange(
+                    new User("ivan@example.com", "Иван Петров"),
+                    new User("maria@example.com", "Мария Сидорова"));
+
+                // Сохраняем сразу: ниже стоит ранний выход, и без этой строки
+                // пользователи не попали бы в базу, когда клубы уже засеяны.
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+
             if (await _db.Clubs.AnyAsync(cancellationToken))
             {
                 return;

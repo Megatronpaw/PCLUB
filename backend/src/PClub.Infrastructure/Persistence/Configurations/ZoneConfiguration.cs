@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PClub.Domain.Entities;
 
@@ -22,7 +19,10 @@ namespace PClub.Infrastructure.Persistence.Configurations
             builder.Property(z => z.PricePerHourCents).IsRequired();
 
             builder.HasMany(z => z.Seats)
-                .WithOne()
+                // WithOne(s => s.Zone), а не WithOne(): у места появилась навигация
+                // вверх, и без её указания EF принял бы Seat.Zone за ВТОРУЮ связь
+                // и завёл вдобавок теневую колонку zone_id1.
+                .WithOne(s => s.Zone)
                 .HasForeignKey(s => s.ZoneId)
                 .OnDelete(DeleteBehavior.Cascade);
 

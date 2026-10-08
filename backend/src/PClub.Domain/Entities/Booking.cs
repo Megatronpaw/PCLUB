@@ -18,31 +18,53 @@ namespace PClub.Domain.Entities
         public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(12);
 
         /// <summary>Создаёт бронь.</summary>
-        /// <param name="seatId">Место.</param>
+        /// <param name="userId">Владелец брони.</param>
         /// <param name="clubId">Клуб.</param>
+        /// <param name="zoneId">Зона.</param>
+        /// <param name="seatId">Место.</param>
         /// <param name="startTime">Начало, UTC. На границе получаса.</param>
         /// <param name="endTime">Конец, UTC. В интервал не включается.</param>
-        /// <param name="totalPriceCents">Итоговая стоимость в копейках, больше нуля.</param>
-        /// <exception cref="DomainValidationException">Интервал или стоимость не по правилам.</exception>
+        /// <param name="pricePerHourCents">Ставка зоны за час в копейках, больше нуля.</param>
+        /// <param name="now">Текущий момент — из IClock, а не из статических часов.</param>
+        /// <exception cref="DomainValidationException">Интервал или ставка не по правилам.</exception>
         public Booking(
-            Guid seatId, Guid clubId,
-            DateTimeOffset startTime, DateTimeOffset endTime, long totalPriceCents)
+            Guid userId,
+            Guid clubId,
+            Guid zoneId,
+            Guid seatId,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
+            long pricePerHourCents,
+            DateTimeOffset now)
         {
-            ValidateRange(startTime, endTime);
-
-            if (totalPriceCents <= 0)
+            if (userId == Guid.Empty)
             {
-                throw new DomainValidationException("Стоимость брони должна быть больше нуля.");
+                throw new DomainValidationException("Владелец брони обязателен.");
             }
 
+            ValidateRange(startTime, endTime);
+
+            if (pricePerHourCents <= 0)
+            {
+                throw new DomainValidationException("Ставка зоны должна быть больше нуля.");
+            }
+
+            UserId = userId;
             Id = Guid.NewGuid();
-            SeatId = seatId;
             ClubId = clubId;
+            ZoneId = zoneId;
+            SeatId = seatId;
             StartTime = startTime;
             EndTime = endTime;
-            TotalPriceCents = totalPriceCents;
+
+            // Итог считает сама бронь, а не вызывающий код: передай сюда готовую
+            // сумму — и её можно будет подменить на любую, минуя ставку зоны.
+            TotalPriceCents = CalculatePrice(pricePerHourCents, startTime, endTime);
             Status = BookingStatus.Confirmed;
-            CreatedAt = DateTimeOffset.UtcNow;
+
+            // Время приходит параметром, а не берётся из DateTimeOffset.UtcNow:
+            // так бронь можно создать в тесте на любой момент.
+            CreatedAt = now;
         }
 
         /// <summary>Для EF Core.</summary>
@@ -58,6 +80,9 @@ namespace PClub.Domain.Entities
 
         /// <summary>Клуб.</summary>
         public Guid ClubId { get; private set; }
+
+        /// <summary>Зона.</summary>
+        public Guid ZoneId { get; private set; }
 
         /// <summary>Начало брони.</summary>
         public DateTimeOffset StartTime { get; private set; }
@@ -81,6 +106,12 @@ namespace PClub.Domain.Entities
 
         /// <summary>Длительность брони.</summary>
         public TimeSpan Duration => EndTime - StartTime;
+
+        /// <summary>Владелец брони.</summary>
+        public Guid UserId { get; private set; }
+
+        /// <summary>Навигация к владельцу.</summary>
+        public User User { get; private set; } = null!;
 
         /// <summary>Считает стоимость по ставке зоны.</summary>
         /// <param name="pricePerHourCents">Ставка за час в копейках.</param>

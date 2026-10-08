@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PClub.Domain.Enums;
+﻿using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Application.Clubs

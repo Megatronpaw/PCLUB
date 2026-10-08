@@ -85,5 +85,8 @@ namespace PClub.Domain.Entities
 
             PricePerHourCents = pricePerHourCents;
         }
+
+        /// <summary>Клуб, которому принадлежит зона.</summary>
+        public Club Club { get; private set; } = null!;
     }
 }

@@ -63,8 +63,19 @@ namespace PClub.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("total_price_cents");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("ZoneId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("zone_id");
+
                     b.HasKey("Id")
                         .HasName("pk_bookings");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_bookings_user_id");
 
                     b.HasIndex("SeatId", "StartTime")
                         .HasDatabaseName("ix_bookings_seat_id_start_time");
@@ -168,6 +179,39 @@ namespace PClub.Infrastructure.Migrations
                     b.ToTable("seats", (string)null);
                 });
 
+            modelBuilder.Entity("PClub.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.HasKey("Id")
+                        .HasName("pk_users");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_email");
+
+                    b.ToTable("users", (string)null);
+                });
+
             modelBuilder.Entity("PClub.Domain.Entities.Zone", b =>
                 {
                     b.Property<Guid>("Id")
@@ -212,31 +256,49 @@ namespace PClub.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_bookings_seats_seat_id");
+
+                    b.HasOne("PClub.Domain.Entities.User", "User")
+                        .WithMany("Bookings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_bookings_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Seat", b =>
                 {
-                    b.HasOne("PClub.Domain.Entities.Zone", null)
+                    b.HasOne("PClub.Domain.Entities.Zone", "Zone")
                         .WithMany("Seats")
                         .HasForeignKey("ZoneId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_seats_zones_zone_id");
+
+                    b.Navigation("Zone");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Zone", b =>
                 {
-                    b.HasOne("PClub.Domain.Entities.Club", null)
+                    b.HasOne("PClub.Domain.Entities.Club", "Club")
                         .WithMany("Zones")
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_zones_clubs_club_id");
+
+                    b.Navigation("Club");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Club", b =>
                 {
                     b.Navigation("Zones");
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Zone", b =>
