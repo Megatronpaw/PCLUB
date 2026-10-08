@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using PClub.Application.Bookings;
 using PClub.Application.Clubs;
 using PClub.Application.Zones;
 
@@ -19,6 +20,7 @@ namespace PClub.Application
         {
             services.AddScoped<IClubService, ClubService>();
             services.AddScoped<IZoneService, ZoneService>();
+            services.AddScoped<IBookingService, BookingService>();
 
             // Находит и регистрирует все AbstractValidator<T> этой сборки.
             // Добавил новый валидатор — он заработает без правки этого файла.

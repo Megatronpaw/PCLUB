@@ -2,9 +2,6 @@
 using PClub.Application.Clubs;
 using PClub.Infrastructure.Persistence;
 using PClub.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PClub.Infrastructure.Clubs
 {
@@ -66,5 +63,14 @@ namespace PClub.Infrastructure.Clubs
             await _db.Zones
                 .Include(z => z.Seats)
                 .FirstOrDefaultAsync(z => z.Id == zoneId, cancellationToken);
+
+        ///<inheritdoc/>
+        public async Task<Seat?> GetSeatWithContextAsync(
+            Guid seatId, CancellationToken cancellationToken = default) =>
+            await _db.Seats
+                .AsNoTracking()
+                .Include(s => s.Zone)
+                    .ThenInclude(z => z.Club)
+                .FirstOrDefaultAsync(s => s.Id == seatId, cancellationToken);
     }
 }

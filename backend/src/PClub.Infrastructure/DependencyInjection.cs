@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PClub.Application.Abstractions;
+using PClub.Application.Bookings;
 using PClub.Application.Clubs;
+using PClub.Infrastructure.Bookings;
 using PClub.Infrastructure.Clubs;
 using PClub.Infrastructure.Persistence;
 using PClub.Infrastructure.Time;
@@ -52,6 +51,7 @@ namespace PClub.Infrastructure
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IClubRepository, EfClubRepository>();
+            services.AddScoped<IBookingRepository, EfBookingRepository>();
 
             services.AddScoped<DatabaseSeeder>();
 

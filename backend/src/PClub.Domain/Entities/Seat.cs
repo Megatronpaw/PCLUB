@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PClub.Domain.Enums;
+﻿using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Domain.Entities
@@ -64,5 +61,12 @@ namespace PClub.Domain.Entities
         /// Возвращает место в работу.
         /// </summary>
         public void ReturnToService() => Status = SeatStatus.Active;
+
+        /// <summary>Зона, которой принадлежит место.</summary>
+        /// <remarks>
+        /// Нужна для Include(s => s.Zone).ThenInclude(z => z.Club): так ставка
+        /// зоны и часы работы клуба приходят одним запросом, а не тремя.
+        /// </remarks>
+        public Zone Zone { get; private set; } = null!;
     }
 }
