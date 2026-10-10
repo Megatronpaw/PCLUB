@@ -20,9 +20,6 @@ public sealed class PingController : ApiControllerBase
     {
         status = "ok",
 
-        // Время берётся из IClock, а не из статических часов напрямую:
-        // после главы 06 обращение к ним должно остаться только внутри
-        // SystemClock и в конструкторах сущностей.
         utc = _clock.UtcNow,
     });
 

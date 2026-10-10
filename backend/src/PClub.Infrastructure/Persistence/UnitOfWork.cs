@@ -48,8 +48,6 @@ namespace PClub.Infrastructure.Persistence
             {
                 var translated = PostgresErrorTranslator.Translate(exception);
 
-                // throw translated, а не throw — иначе потеряем новое исключение.
-                // И не throw exception — это сбросило бы стек вызовов.
                 if (translated is not null)
                 {
                     throw translated;
@@ -64,15 +62,10 @@ namespace PClub.Infrastructure.Persistence
             Func<CancellationToken, Task<T>> operation,
             CancellationToken cancellationToken = default)
         {
-            // Стратегия повтора EF (EnableRetryOnFailure) не разрешает свои
-            // транзакции — отдаём ей всю операцию целиком. Иначе получим
-            // «does not support user-initiated transactions».
             var strategy = _db.Database.CreateExecutionStrategy();
 
             return await strategy.ExecuteAsync(async () =>
             {
-                // Цикл без условия: выход — либо return при успехе, либо исключение,
-                // когда attempt < MaxRetryAttempts перестанет выполняться.
                 for (var attempt = 1; ; attempt++)
                 {
                     try
@@ -86,17 +79,11 @@ namespace PClub.Infrastructure.Persistence
 
                         return result;
                     }
-                    // Фильтр исключения: если условие ложно, catch НЕ входит
-                    // и исключение летит выше, не разворачивая стек.
                     catch (Exception exception)
                         when (IsTransient(exception) && attempt < MaxRetryAttempts)
                     {
-                        // Контекст помнит неудавшиеся изменения — на повторе они
-                        // приведут к дублям. Сбрасываем отслеживание.
                         _db.ChangeTracker.Clear();
 
-                        // Рост вдвое плюс случайная добавка: без неё повторы
-                        // столкнутся снова в тот же момент.
                         var delay = BaseRetryDelayMs * (1 << (attempt - 1));
                         var jitter = Random.Shared.Next(0, delay / 2 + 1);
 
@@ -113,7 +100,6 @@ namespace PClub.Infrastructure.Persistence
         /// <summary>Можно ли повторить эту ошибку.</summary>
         private static bool IsTransient(Exception exception)
         {
-            // Ошибка может лежать и снаружи, и внутри DbUpdateException.
             var postgres = exception as PostgresException
                 ?? exception.InnerException as PostgresException;
 

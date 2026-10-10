@@ -1,4 +1,5 @@
-﻿using PClub.Domain.Enums;
+﻿using PClub.Application.Common;
+using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Application.Clubs
@@ -26,5 +27,11 @@ namespace PClub.Application.Clubs
         ///<exception cref="Domain.Exceptions.ConflictException">Публикация клуба без мест</exception>
         Task<ClubDto> ChangeStatusAsync(
             Guid id, ClubStatus status, CancellationToken cancellationToken= default);
+
+        /// <summary>
+        /// Страница каталога
+        /// </summary>
+        Task<PagedResult<ClubListItemDto>> SearchAsync(
+            ClubCatalogQuery query, CancellationToken cancellationToken= default);
     }
 }

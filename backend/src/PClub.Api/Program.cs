@@ -19,10 +19,6 @@ builder.Services
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// Валидатор ставки объявлен на интерфейсе IHasZonePrice, а фильтр ищет
-// валидатор по КОНКРЕТНОМУ типу аргумента — связываем явно. Без этой
-// строки валидатор молча не сработает: AddValidatorsFromAssembly
-// зарегистрировал его как IValidator<IHasZonePrice>.
 builder.Services.AddScoped<
     IValidator<ChangeZonePriceRequest>, ChangeZonePriceValidator>();
 
@@ -32,8 +28,6 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-    // Вот зачем был GenerateDocumentationFile: эти две строки забирают
-    // комментарии /// и показывают их в Swagger как описания эндпоинтов.
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
 });
@@ -69,7 +63,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.UseAuthorization();
 app.MapControllers();

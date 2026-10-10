@@ -34,8 +34,6 @@ namespace PClub.Domain.Entities
 
             Id = Guid.NewGuid();
 
-            // Почта хранится в нижнем регистре: иначе ivan@ и Ivan@ прошли бы
-            // мимо уникального индекса как два разных адреса.
             Email = email.Trim().ToLowerInvariant();
             DisplayName = displayName.Trim();
             CreatedAt = DateTimeOffset.UtcNow;

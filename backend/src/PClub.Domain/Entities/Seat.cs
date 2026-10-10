@@ -11,7 +11,6 @@ namespace PClub.Domain.Entities
     {
         private Seat()
         {
-
         }
 
         /// <summary>

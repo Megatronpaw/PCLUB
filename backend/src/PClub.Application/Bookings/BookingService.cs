@@ -32,9 +32,6 @@ namespace PClub.Application.Bookings
         }
 
         /// <inheritdoc />
-        // Вся операция уходит в транзакцию с повтором: при взаимной блокировке
-        // (40P01) или конфликте сериализации (40001) она выполнится заново.
-        // Поэтому внутри CreateCoreAsync нет ничего необратимого.
         public Task<BookingDto> CreateAsync(
             CreateBookingRequest request, CancellationToken cancellationToken = default) =>
             _unitOfWork.ExecuteInTransactionAsync(
@@ -57,14 +54,11 @@ namespace PClub.Application.Bookings
             var booking = await _bookings.GetTrackedAsync(bookingId, cancellationToken)
                 ?? throw new NotFoundException("Booking", bookingId);
 
-            // Чужую бронь отменять нельзя. До главы 11 userId приходит от клиента,
-            // так что защита пока условная — но правило уже на месте.
             if (booking.UserId != userId)
             {
                 throw new ForbiddenException("Это не ваша бронь.");
             }
 
-            // Решение принимает сущность: правило «за два часа» — её знание.
             booking.Cancel(_clock.UtcNow);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -81,7 +75,6 @@ namespace PClub.Application.Bookings
 
             var club = seat.Zone.Club;
 
-            // Границы суток в UTC. Интервал полуоткрытый, как и у брони.
             var from = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
             var to = from.AddDays(1);
 
@@ -106,14 +99,12 @@ namespace PClub.Application.Bookings
         private async Task<BookingDto> CreateCoreAsync(
             CreateBookingRequest request, CancellationToken cancellationToken)
         {
-            // ===== 1. Находим место и всё, что вокруг него =====
             var seat = await _clubs.GetSeatWithContextAsync(request.SeatId, cancellationToken)
                 ?? throw new NotFoundException("Seat", request.SeatId);
 
             var zone = seat.Zone;
             var club = zone.Club;
 
-            // ===== 2. Проверки состояния мира — уровень 2 из главы 07 =====
             if (seat.Status != SeatStatus.Active)
             {
                 throw new ConflictException(
@@ -131,11 +122,6 @@ namespace PClub.Application.Bookings
                     $"Клуб работает с {club.OpeningTime} до {club.ClosingTime}.");
             }
 
-            // ===== 3. Быстрая проверка занятости =====
-            // Она по-прежнему может промахнуться на гонке — и это нормально:
-            // последнее слово за ограничением bookings_no_overlap в базе.
-            // Здесь она нужна, чтобы в обычном случае дать понятный ответ
-            // без похода в обработчик ошибок.
             if (await _bookings.HasOverlapAsync(
                 request.SeatId, request.StartTime, request.EndTime, cancellationToken))
             {
@@ -143,7 +129,6 @@ namespace PClub.Application.Bookings
                     $"Место {seat.Label} уже занято в выбранное время.");
             }
 
-            // ===== 4. Создаём. Все инварианты проверит конструктор =====
             var booking = new Booking(
                 userId: request.UserId,
                 clubId: club.Id,

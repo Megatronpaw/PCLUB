@@ -1,4 +1,5 @@
-﻿using PClub.Domain.Entities;
+﻿using PClub.Application.Common;
+using PClub.Domain.Entities;
 
 namespace PClub.Application.Clubs
 {
@@ -54,5 +55,12 @@ namespace PClub.Application.Clubs
         /// <returns>Место или <c>null</c>, если такого нет.</returns>
         Task<Seat?> GetSeatWithContextAsync(
             Guid seatId, CancellationToken cancellationToken = default);
+
+        /// <summary>Страница каталога по заданным фильтрам.</summary>
+        /// <param name="query">Фильтры, порядок и номер страницы.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Страница клубов и общее количество подходящих.</returns>
+        Task<PagedResult<ClubListItemDto>> SearchAsync(
+            ClubCatalogQuery query, CancellationToken cancellationToken = default);
     }
 }

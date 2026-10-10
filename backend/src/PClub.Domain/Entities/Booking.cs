@@ -57,13 +57,9 @@ namespace PClub.Domain.Entities
             StartTime = startTime;
             EndTime = endTime;
 
-            // Итог считает сама бронь, а не вызывающий код: передай сюда готовую
-            // сумму — и её можно будет подменить на любую, минуя ставку зоны.
             TotalPriceCents = CalculatePrice(pricePerHourCents, startTime, endTime);
             Status = BookingStatus.Confirmed;
 
-            // Время приходит параметром, а не берётся из DateTimeOffset.UtcNow:
-            // так бронь можно создать в тесте на любой момент.
             CreatedAt = now;
         }
 
@@ -100,8 +96,6 @@ namespace PClub.Domain.Entities
         public DateTimeOffset CreatedAt { get; private set; }
 
         /// <summary>Когда отменена; null, если не отменена.</summary>
-        // Тип с вопросительным знаком: без него «не отменена» выглядело бы
-        // как 0001-01-01, и отличить её от настоящей даты было бы нельзя.
         public DateTimeOffset? CancelledAt { get; private set; }
 
         /// <summary>Длительность брони.</summary>
@@ -180,8 +174,6 @@ namespace PClub.Domain.Entities
                     $"Одна бронь не может быть длиннее {MaxDuration.TotalHours:0} ч.");
             }
 
-            // По Ticks, а не по TotalMinutes: TotalMinutes — double,
-            // и остаток там может оказаться 1E-14 вместо нуля.
             if (duration.Ticks % SlotGranularity.Ticks != 0)
             {
                 throw new DomainValidationException(

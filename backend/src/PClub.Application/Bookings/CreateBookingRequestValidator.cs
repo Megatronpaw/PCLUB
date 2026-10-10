@@ -13,7 +13,6 @@ namespace PClub.Application.Bookings
         /// Задаёт правила.
         /// </summary>
         /// <param name="clock">Часы: нужны для правила «не в прошлом».</param>
-        // Валидаторы создаёт контейнер, поэтому зависимости в конструкторе работают.
         public CreateBookingRequestValidator(IClock clock)
         {
             RuleFor(x => x.UserId).NotEmpty().WithMessage("Пользователь обязателен.");
@@ -26,8 +25,6 @@ namespace PClub.Application.Bookings
                 .GreaterThan(x => x.StartTime)
                 .WithMessage("Окончание должно быть позже начала.");
 
-            // Правило о длительности смотрит на два поля, но объявлено на
-            // EndTime: тогда имя поля попадёт в ответ, а не пустой ключ "".
             RuleFor(x => x.EndTime)
                 .Must((request, endTime) =>
                     endTime - request.StartTime <= Booking.MaxDuration)

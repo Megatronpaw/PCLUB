@@ -20,8 +20,6 @@ namespace PClub.Application.Clubs
         public ChangeClubStatusRequestValidator()
         {
             RuleFor(x => x.Status)
-                // Enum.IsDefined отвечает на вопрос «такое значение вообще
-                // объявлено?». Для (ClubStatus)99 и (ClubStatus)-1 ответ — нет.
                 .Must(status => Enum.IsDefined(status))
                 .WithMessage(
                     $"Допустимые состояния: {string.Join(", ", Enum.GetNames<ClubStatus>())}.");

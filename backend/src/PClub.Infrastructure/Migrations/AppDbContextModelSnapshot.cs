@@ -135,8 +135,8 @@ namespace PClub.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_clubs");
 
-                    b.HasIndex("City", "Status")
-                        .HasDatabaseName("ix_clubs_city_status");
+                    b.HasIndex("Status", "City", "Name")
+                        .HasDatabaseName("ix_clubs_status_city_name");
 
                     b.ToTable("clubs", (string)null);
                 });

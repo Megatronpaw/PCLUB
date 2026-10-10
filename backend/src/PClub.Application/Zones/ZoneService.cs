@@ -27,13 +27,9 @@ namespace PClub.Application.Zones
         public async Task<ZoneDto> ChangePriceAsync(
             Guid zoneId, long pricePerHourCents, CancellationToken cancellationToken = default)
         {
-            // Отслеживаемая: будем менять. Обычное чтение идёт с AsNoTracking,
-            // и тогда SaveChangesAsync не увидел бы изменений.
             var zone = await _clubs.GetTrackedZoneAsync(zoneId, cancellationToken)
                 ?? throw new NotFoundException("Zone", zoneId);
 
-            // Проверку «ставка больше нуля» делает сама сущность — сервис её не
-            // дублирует. Правило живёт в одном месте, и обойти его нельзя.
             zone.ChangePrice(pricePerHourCents);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
