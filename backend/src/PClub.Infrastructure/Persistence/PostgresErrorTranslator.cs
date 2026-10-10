@@ -33,7 +33,6 @@ namespace PClub.Infrastructure.Persistence
         /// <returns>Исключение или <c>null</c>, если случай не наш.</returns>
         public static DomainException? Translate(DbUpdateException exception)
         {
-            // Настоящая причина лежит во внутреннем исключении драйвера.
             if (exception.InnerException is not PostgresException postgres)
             {
                 return null;
@@ -41,28 +40,20 @@ namespace PClub.Infrastructure.Persistence
 
             return postgres.SqlState switch
             {
-                // Главный случай главы: гонка проскочила проверку в сервисе,
-                // и место спасло ограничение EXCLUDE.
                 ExclusionViolation when postgres.ConstraintName == BookingOverlapConstraint =>
                     new ConflictException(
                         "Место уже занято в выбранное время. Выберите другое время или место."),
 
-                // Сообщение по имени ограничения: пользователю не нужно знать,
-                // что сломалось внутри, но текст должен подсказывать, что делать.
                 UniqueViolation when postgres.ConstraintName?.Contains("email") == true =>
                     new ConflictException("Пользователь с такой почтой уже есть."),
 
                 ExclusionViolation or UniqueViolation =>
                     new ConflictException("Такая запись уже существует."),
 
-                // Ссылка на то, чего нет: до главы 11 userId присылает клиент,
-                // так что это самая вероятная плохая просьба к этому эндпоинту.
                 ForeignKeyViolation =>
                     new DomainValidationException(
                         "Запрос ссылается на несуществующую запись: проверь userId и seatId."),
 
-                // Всё остальное — не наше дело. Пусть летит выше как 500:
-                // это настоящая поломка, и её надо увидеть в логах со стеком.
                 _ => null,
             };
         }

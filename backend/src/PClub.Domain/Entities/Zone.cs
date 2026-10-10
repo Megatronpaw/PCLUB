@@ -31,8 +31,6 @@ namespace PClub.Domain.Entities
             Name = name.Trim();
             PricePerHourCents = pricePerHourCents;
 
-            // Было: specs = specs.Trim(); — присваивание ПАРАМЕТРУ, а не свойству.
-            // Из-за этого Specs навсегда оставался пустым, молча и без ошибки.
             Specs = specs.Trim();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PClub.Application.Clubs;
+using PClub.Application.Common;
 
 namespace PClub.Api.Controllers
 {
@@ -16,13 +17,14 @@ namespace PClub.Api.Controllers
         public ClubsController(IClubService clubs) => _clubs = clubs;
 
         /// <summary>Возвращает все клубы со зонами и местами.</summary>
+        /// <param name="query">Параметры выборки из строки запроса.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <response code="200">Список клубов.</response>
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ClubDto>>> Get(
+        public async Task<ActionResult<PagedResult<ClubListItemDto>>> Get(
+            [FromQuery] ClubCatalogQuery query,
             CancellationToken cancellationToken) =>
-            Ok(await _clubs.GetAllAsync(cancellationToken));
-
+            Ok(await _clubs.SearchAsync(query, cancellationToken));
 
         /// <summary>Возвращает один клуб.</summary>
         /// <param name="id">Идентификатор клуба.</param>

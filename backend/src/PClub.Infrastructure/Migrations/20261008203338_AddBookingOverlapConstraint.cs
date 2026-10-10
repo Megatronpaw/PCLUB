@@ -28,11 +28,9 @@ namespace PClub.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Down пишем всегда: миграция без отката — билет в одну сторону.
             migrationBuilder.Sql(
                 "ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_no_overlap;");
 
-            // Расширение не удаляем: им могут пользоваться другие ограничения.
         }
     }
 }

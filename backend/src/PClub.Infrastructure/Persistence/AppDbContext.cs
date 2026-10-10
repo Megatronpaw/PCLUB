@@ -18,7 +18,6 @@ namespace PClub.Infrastructure.Persistence
         /// </summary>
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-
         }
         /// <summary>Пользователи</summary>
         public DbSet<User> Users => Set<User>();

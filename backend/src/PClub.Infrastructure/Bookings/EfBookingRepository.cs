@@ -29,9 +29,7 @@ namespace PClub.Infrastructure.Bookings
             _db.Bookings
                 .AsNoTracking()
                 .Where(b => b.SeatId == seatId)
-                // Отменённая бронь место не занимает.
                 .Where(b => b.Status != BookingStatus.Cancelled)
-                // Та же формула, что в Booking.Overlaps, но в SQL.
                 .AnyAsync(b => startTime < b.EndTime && b.StartTime < endTime,
                     cancellationToken);
 
@@ -45,11 +43,8 @@ namespace PClub.Infrastructure.Bookings
                 .AsNoTracking()
                 .Where(b => b.SeatId == seatId)
                 .Where(b => b.Status != BookingStatus.Cancelled)
-                // Пересечение, а не «начало внутри дня»: бронь с 23:00 до 01:00
-                // относится к двум датам и должна быть видна на обеих.
                 .Where(b => from < b.EndTime && b.StartTime < to)
                 .OrderBy(b => b.StartTime)
-                // Проекция: две колонки вместо всей брони.
                 .Select(b => new BusyIntervalDto(b.StartTime, b.EndTime))
                 .ToListAsync(cancellationToken);
 

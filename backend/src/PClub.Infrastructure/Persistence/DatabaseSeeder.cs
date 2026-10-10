@@ -9,6 +9,24 @@ namespace PClub.Infrastructure.Persistence
     /// </summary>
     public sealed class DatabaseSeeder
     {
+        /// <summary>
+        /// Города, названия и базовые ставки: из них собирается разнообразный
+        /// каталог, на котором видно работу фильтров главы 09.
+        /// </summary>
+        private static readonly (string City, string Suffix, long BasePrice)[] Templates =
+        [
+            ("Москва", "Арбат", 18000),
+            ("Москва", "Сокол", 15000),
+            ("Москва", "Кузьминки", 9000),
+            ("Санкт-Петербург", "Невский", 16000),
+            ("Санкт-Петербург", "Приморский", 11000),
+            ("Казань", "Кремлёвская", 12000),
+            ("Казань", "Горки", 7500),
+            ("Новосибирск", "Центральный", 10000),
+            ("Екатеринбург", "Плотинка", 13000),
+            ("Краснодар", "Красная", 8500),
+        ];
+
         private readonly AppDbContext _db;
 
         /// <summary>Создаёт сидер.</summary>
@@ -32,8 +50,6 @@ namespace PClub.Infrastructure.Persistence
                     new User("ivan@example.com", "Иван Петров"),
                     new User("maria@example.com", "Мария Сидорова"));
 
-                // Сохраняем сразу: ниже стоит ранний выход, и без этой строки
-                // пользователи не попали бы в базу, когда клубы уже засеяны.
                 await _db.SaveChangesAsync(cancellationToken);
             }
 
@@ -42,26 +58,35 @@ namespace PClub.Infrastructure.Persistence
                 return;
             }
 
-            var club = new Club(
-                "Neon Arena", "Москва", "ул. Ленина, 52",
-                new TimeOnly(12, 0), new TimeOnly(0, 0));
+            foreach (var (city, suffix, basePrice) in Templates)
+            {
+                var club = new Club(
+                    name: $"PClub {suffix}",
+                    city: city,
+                    address: $"ул. {suffix}, 1",
+                    openingTime: new TimeOnly(10, 0),
+                    closingTime: new TimeOnly(23, 0));
 
-            var standard = new Zone("Standard", 15_000, "i5-13400F · RTX 4060 · 27\" 165Гц");
-            standard.AddSeat(new Seat("PC-01"));
-            standard.AddSeat(new Seat("PC-02"));
+                var standard = new Zone("Стандарт", basePrice);
+                var vip = new Zone("VIP", basePrice * 2);
 
-            var underRepair = new Seat("PC-03");
-            underRepair.SendToMaintenance();
-            standard.AddSeat(underRepair);
+                club.AddZone(standard);
+                club.AddZone(vip);
 
-            var vip = new Zone("VIP", 30_000, "i9-14900K · RTX 5080 · 27\" 370 Гц");
-            vip.AddSeat(new Seat("VIP-01"));
+                for (var i = 1; i <= 8; i++)
+                {
+                    standard.AddSeat(new Seat($"PC-{i:00}"));
+                }
 
-            club.AddZone(standard);
-            club.AddZone(vip);
-            club.ChangeStatus(ClubStatus.Published, hasBookableSeats: true);
+                for (var i = 1; i <= 3; i++)
+                {
+                    vip.AddSeat(new Seat($"VIP-{i:00}"));
+                }
 
-            _db.Clubs.Add(club);
+                club.ChangeStatus(ClubStatus.Published, hasBookableSeats: true);
+
+                _db.Clubs.Add(club);
+            }
 
             await _db.SaveChangesAsync(cancellationToken);
         }

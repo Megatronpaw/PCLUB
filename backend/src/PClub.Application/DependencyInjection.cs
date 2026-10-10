@@ -22,8 +22,6 @@ namespace PClub.Application
             services.AddScoped<IZoneService, ZoneService>();
             services.AddScoped<IBookingService, BookingService>();
 
-            // Находит и регистрирует все AbstractValidator<T> этой сборки.
-            // Добавил новый валидатор — он заработает без правки этого файла.
             services.AddValidatorsFromAssembly(
                 typeof(DependencyInjection).Assembly,
                 includeInternalTypes: true);

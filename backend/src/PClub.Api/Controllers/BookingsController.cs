@@ -83,7 +83,6 @@ namespace PClub.Api.Controllers
         {
             var booking = await _bookings.CreateAsync(request, cancellationToken);
 
-            // 201 Created с заголовком Location — так положено отвечать на создание.
             return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
         }
 
@@ -105,8 +104,6 @@ namespace PClub.Api.Controllers
         /// <response code="403">Бронь принадлежит другому пользователю.</response>
         /// <response code="404">Брони нет.</response>
         /// <response code="409">Окно отмены закрыто или бронь уже не активна.</response>
-        // POST, а не DELETE: отмена — не удаление. Бронь остаётся в истории
-        // со статусом Cancelled, и это нужно для возвратов и отчётности.
         [HttpPost("{id:guid}/cancel")]
         public async Task<ActionResult<BookingDto>> Cancel(
             Guid id,

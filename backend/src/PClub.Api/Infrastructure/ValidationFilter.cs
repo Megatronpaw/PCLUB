@@ -24,14 +24,9 @@ namespace PClub.Api.Infrastructure
 
         /// <inheritdoc />
         public async Task OnActionExecutionAsync(
-            // ActionExecutingContext — «ДО выполнения действия». Именно у него
-            // есть ActionArguments. У ActionExecutedContext («после») их нет:
-            // там уже лежит результат, а проверять аргументы поздно.
             ActionExecutingContext context,
             ActionExecutionDelegate next)
         {
-            // Собираем ошибки по всем аргументам сразу: клиенту полезнее получить
-            // все проблемы одним ответом, чем по одной за запрос.
             var errors = new Dictionary<string, List<string>>();
 
             foreach (var argument in context.ActionArguments.Values)
@@ -41,14 +36,10 @@ namespace PClub.Api.Infrastructure
                     continue;
                 }
 
-                // Валидатор для КОНКРЕТНОГО типа аргумента. Универсальный
-                // IValidator<object> не подойдёт — тип нужен настоящий.
                 var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
 
                 if (_services.GetService(validatorType) is not IValidator validator)
                 {
-                    // Валидатора для этого типа нет — и это нормально:
-                    // у Guid и CancellationToken валидаторов не бывает.
                     continue;
                 }
 
@@ -58,7 +49,6 @@ namespace PClub.Api.Infrastructure
 
                 foreach (var failure in result.Errors)
                 {
-                    // Группируем по имени поля: одно поле — список его проблем.
                     if (!errors.TryGetValue(failure.PropertyName, out var messages))
                     {
                         messages = [];
@@ -71,8 +61,6 @@ namespace PClub.Api.Infrastructure
 
             if (errors.Count > 0)
             {
-                // ValidationProblemDetails — тот же формат, что у встроенной
-                // проверки модели ASP.NET: объект errors со словарём «поле → список».
                 context.Result = new BadRequestObjectResult(
                     new ValidationProblemDetails(
                         errors.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray()))
@@ -81,7 +69,6 @@ namespace PClub.Api.Infrastructure
                         Status = StatusCodes.Status400BadRequest,
                     });
 
-                // next() не вызываем — метод контроллера не выполнится.
                 return;
             }
 

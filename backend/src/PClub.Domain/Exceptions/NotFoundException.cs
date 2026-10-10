@@ -12,7 +12,6 @@ namespace PClub.Domain.Exceptions
         public NotFoundException(string entity, object key)
             : base($"{entity} '{key}' не найден ")
         {
-
         }
     }
 }

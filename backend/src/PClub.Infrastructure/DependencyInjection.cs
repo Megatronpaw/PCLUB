@@ -10,7 +10,6 @@ using PClub.Infrastructure.Clubs;
 using PClub.Infrastructure.Persistence;
 using PClub.Infrastructure.Time;
 
-
 namespace PClub.Infrastructure
 {
     /// <summary>
