@@ -146,7 +146,10 @@ namespace PClub.Infrastructure.Clubs
                 "price_asc" => clubs.OrderBy(c => c.Zones.Min(z => z.PricePerHourCents)),
                 "price_desc" => clubs.OrderByDescending(c => c.Zones.Min(z => z.PricePerHourCents)),
                 "seats_desc" => clubs.OrderByDescending(c => c.Zones.Sum(z => z.Seats.Count)),
-
+                "seats_asc" => clubs.OrderBy(c => c.Zones.Sum(z => z.Seats.Count)),
+                "name_desc" => clubs.OrderByDescending(c => c.Name),
+                "newest" => clubs.OrderByDescending(c => c.CreatedAt),
+                "city" => clubs.OrderBy(c => c.City).ThenBy(c => c.Name),
                 _ => clubs.OrderBy(c => c.Name),
             };
 

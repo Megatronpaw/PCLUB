@@ -13,27 +13,27 @@ namespace PClub.Infrastructure.Persistence
         /// Города, названия, базовые ставки и описания: из них собирается
         /// разнообразный каталог, на котором видна работа фильтров.
         /// </summary>
-        private static readonly (string City, string Suffix, long BasePrice, string Description)[] Templates =
+        private static readonly (string City, string Suffix, long BasePrice, int StandardSeats, string Description)[] Templates =
         [
-            ("Москва", "Арбат", 18000,
+            ("Москва", "Арбат", 18000, 14,
                 "Флагманский зал в центре: топовые сборки, профессиональная периферия и бар."),
-            ("Москва", "Сокол", 15000,
+            ("Москва", "Сокол", 15000, 10,
                 "Тихий клуб рядом с метро. Подходит для долгих сессий и работы."),
-            ("Москва", "Кузьминки", 9000,
+            ("Москва", "Кузьминки", 9000, 8,
                 "Бюджетный зал у дома: всё нужное для сетевых игр без переплаты."),
-            ("Санкт-Петербург", "Невский", 16000,
+            ("Санкт-Петербург", "Невский", 16000, 16,
                 "Два этажа на главной улице города, отдельная зона для турниров."),
-            ("Санкт-Петербург", "Приморский", 11000,
+            ("Санкт-Петербург", "Приморский", 11000, 9,
                 "Спокойный район, большие мониторы и кресла с поддержкой поясницы."),
-            ("Казань", "Кремлёвская", 12000,
+            ("Казань", "Кремлёвская", 12000, 11,
                 "Светлый зал в двух шагах от кремля, кофе и настольные игры в перерывах."),
-            ("Казань", "Горки", 7500,
+            ("Казань", "Горки", 7500, 6,
                 "Самые доступные цены в городе и круглосуточные выходные."),
-            ("Новосибирск", "Центральный", 10000,
+            ("Новосибирск", "Центральный", 10000, 20,
                 "Крупнейший зал за Уралом: регулярные турниры и своя команда."),
-            ("Екатеринбург", "Плотинка", 13000,
+            ("Екатеринбург", "Плотинка", 13000, 12,
                 "Клуб у набережной с панорамными окнами и зоной отдыха."),
-            ("Краснодар", "Красная", 8500,
+            ("Краснодар", "Красная", 8500, 7,
                 "Южный филиал сети: кондиционеры, прохладные напитки и быстрый интернет."),
         ];
 
@@ -68,7 +68,7 @@ namespace PClub.Infrastructure.Persistence
                 return;
             }
 
-            foreach (var (city, suffix, basePrice, description) in Templates)
+            foreach (var (city, suffix, basePrice, standardSeats, description) in Templates)
             {
                 var club = new Club(
                     name: $"PClub {suffix}",
@@ -84,7 +84,7 @@ namespace PClub.Infrastructure.Persistence
                 club.AddZone(standard);
                 club.AddZone(vip);
 
-                for (var i = 1; i <= 8; i++)
+                for (var i = 1; i <= standardSeats; i++)
                 {
                     standard.AddSeat(new Seat($"PC-{i:00}"));
                 }
@@ -94,7 +94,7 @@ namespace PClub.Infrastructure.Persistence
                     vip.AddSeat(new Seat($"VIP-{i:00}"));
                 }
 
-                var underRepair = new Seat("PC-09");
+                var underRepair = new Seat($"PC-{standardSeats + 1:00}");
                 underRepair.SendToMaintenance();
                 standard.AddSeat(underRepair);
 

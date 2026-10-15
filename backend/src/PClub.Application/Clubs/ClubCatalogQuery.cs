@@ -23,7 +23,10 @@
         /// <summary>Максимальная ставка зоны, копейки. Выше — отсечь.</summary>
         public long? MaxPricePerHourCents { get; init; }
 
-        /// <summary>Порядок: name, price_asc, price_desc, seats_desc.</summary>
+        /// <summary>
+        /// Порядок выдачи: name, name_desc, price_asc, price_desc,
+        /// seats_asc, seats_desc, newest, city. По умолчанию name.
+        /// </summary>
         public string? Sort { get; init; }
 
         /// <summary>Номер страницы, с единицы.</summary>
