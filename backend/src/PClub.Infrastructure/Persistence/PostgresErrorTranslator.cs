@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PClub.Domain.Exceptions;
 
@@ -49,6 +49,9 @@ namespace PClub.Infrastructure.Persistence
 
                 ExclusionViolation or UniqueViolation =>
                     new ConflictException("Такая запись уже существует."),
+
+                "23514" when postgres.ConstraintName == "users_balance_non_negative" =>
+                    new ConflictException("Операция привела бы к отрицательному балансу."),
 
                 ForeignKeyViolation =>
                     new DomainValidationException(

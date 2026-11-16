@@ -1,4 +1,5 @@
-﻿using PClub.Application.Abstractions;
+using PClub.Application.Wallets;
+using PClub.Application.Abstractions;
 using PClub.Application.Clubs;
 using PClub.Domain.Entities;
 using PClub.Domain.Enums;
@@ -13,22 +14,25 @@ namespace PClub.Application.Bookings
         private readonly IClubRepository _clubs;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IClock _clock;
+        private readonly IWalletRepository _wallets;
 
         /// <summary>Создаёт сервис.</summary>
         /// <param name="bookings">Доступ к броням.</param>
         /// <param name="clubs">Доступ к клубам.</param>
         /// <param name="unitOfWork">Сохранение изменений и транзакции.</param>
+        /// <param name="wallets">Кошельки и журнал операций.</param>
         /// <param name="clock">Текущее время.</param>
         public BookingService(
             IBookingRepository bookings,
             IClubRepository clubs,
             IUnitOfWork unitOfWork,
-            IClock clock)
+            IClock clock, IWalletRepository wallets)
         {
             _bookings = bookings;
             _clubs = clubs;
             _unitOfWork = unitOfWork;
             _clock = clock;
+            _wallets = wallets;
         }
 
         /// <inheritdoc />
@@ -48,8 +52,14 @@ namespace PClub.Application.Bookings
         }
 
         /// <inheritdoc />
-        public async Task<BookingDto> CancelAsync(
-            Guid bookingId, Guid userId, CancellationToken cancellationToken = default)
+        public Task<BookingDto> CancelAsync(
+            Guid bookingId, Guid userId, CancellationToken cancellationToken = default) =>
+            _unitOfWork.ExecuteInTransactionAsync(
+                token => CancelCoreAsync(bookingId, userId, token), cancellationToken);
+
+        /// <summary>Отмена внутри транзакции.</summary>
+        private async Task<BookingDto> CancelCoreAsync(
+            Guid bookingId, Guid userId, CancellationToken cancellationToken)
         {
             var booking = await _bookings.GetTrackedAsync(bookingId, cancellationToken)
                 ?? throw new NotFoundException("Booking", bookingId);
@@ -58,8 +68,34 @@ namespace PClub.Application.Bookings
             {
                 throw new ForbiddenException("Это не ваша бронь.");
             }
+            var now = _clock.UtcNow;
 
-            booking.Cancel(_clock.UtcNow);
+            booking.Cancel(now);
+            var refundCents = await _wallets.HasBookingChargeAsync(booking.Id, cancellationToken)
+                ? booking.CalculateRefundCents(now) : 0;
+
+            if (refundCents > 0)
+            {
+                var user = await _wallets.GetTrackedUserAsync(userId, cancellationToken)
+                    ?? throw new NotFoundException("User", userId);
+
+                var balanceAfter = user.Credit(refundCents);
+
+                var isFull = refundCents == booking.TotalPriceCents;
+
+                _wallets.AddTransaction(new WalletTransaction(
+                    userId: user.Id,
+                    type: WalletTransactionType.BookingRefund,
+                    amountCents: refundCents,
+                    balanceAfterCents: balanceAfter,
+                    description: isFull
+                        ? $"Полный возврат за отмену брони на {booking.StartTime:dd.MM HH:mm}"
+                        : $"Возврат 50% за позднюю отмену брони на {booking.StartTime:dd.MM HH:mm}",
+                    now: now,
+                    bookingId: booking.Id));
+
+                booking.MarkRefunded(refundCents);
+            }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -139,8 +175,23 @@ namespace PClub.Application.Bookings
                 pricePerHourCents: zone.PricePerHourCents,
                 now: _clock.UtcNow);
 
+            var user = await _wallets.GetTrackedUserAsync(request.UserId, cancellationToken)
+                ?? throw new NotFoundException("User", request.UserId);
+            var balanceAfter = user.Debit(booking.TotalPriceCents);
+
             _bookings.Add(booking);
+
+            _wallets.AddTransaction(new WalletTransaction(
+                userId: user.Id,
+                type: WalletTransactionType.BookingCharge,
+                amountCents: -booking.TotalPriceCents,
+                balanceAfterCents: balanceAfter,
+                description: $"Бронь места {seat.Label} на {booking.StartTime:dd.MM HH:mm}",
+                now: _clock.UtcNow,
+                bookingId: booking.Id));
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+
 
             return BookingDto.From(booking);
         }

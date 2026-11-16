@@ -45,6 +45,10 @@ namespace PClub.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_time");
 
+                    b.Property<long>("RefundedCents")
+                        .HasColumnType("bigint")
+                        .HasColumnName("refunded_cents");
+
                     b.Property<Guid>("SeatId")
                         .HasColumnType("uuid")
                         .HasColumnName("seat_id");
@@ -186,6 +190,10 @@ namespace PClub.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<long>("BalanceCents")
+                        .HasColumnType("bigint")
+                        .HasColumnName("balance_cents");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -209,7 +217,61 @@ namespace PClub.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("users", null, t =>
+                        {
+                            t.HasCheckConstraint("users_balance_non_negative", "balance_cents >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.WalletTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("bigint")
+                        .HasColumnName("amount_cents");
+
+                    b.Property<long>("BalanceAfterCents")
+                        .HasColumnType("bigint")
+                        .HasColumnName("balance_after_cents");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("booking_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_wallet_transactions");
+
+                    b.HasIndex("BookingId")
+                        .HasDatabaseName("ix_wallet_transactions_booking_id");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_wallet_transactions_user_id_created_at");
+
+                    b.ToTable("wallet_transactions", (string)null);
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Zone", b =>
@@ -277,6 +339,22 @@ namespace PClub.Infrastructure.Migrations
                         .HasConstraintName("fk_seats_zones_zone_id");
 
                     b.Navigation("Zone");
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.WalletTransaction", b =>
+                {
+                    b.HasOne("PClub.Domain.Entities.Booking", null)
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_wallet_transactions_bookings_booking_id");
+
+                    b.HasOne("PClub.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_wallet_transactions_users_user_id");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Zone", b =>

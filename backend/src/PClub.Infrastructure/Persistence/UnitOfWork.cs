@@ -66,6 +66,7 @@ namespace PClub.Infrastructure.Persistence
 
             return await strategy.ExecuteAsync(async () =>
             {
+                _db.ChangeTracker.Clear();
                 for (var attempt = 1; ; attempt++)
                 {
                     try
@@ -100,10 +101,13 @@ namespace PClub.Infrastructure.Persistence
         /// <summary>Можно ли повторить эту ошибку.</summary>
         private static bool IsTransient(Exception exception)
         {
-            var postgres = exception as PostgresException
-                ?? exception.InnerException as PostgresException;
-
-            return postgres?.SqlState is SerializationFailure or DeadlockDetected;
+            for (Exception? current = exception; current is not null; current = current.InnerException)
+            {
+                if (current is PostgresException postgres
+                    && postgres.SqlState is SerializationFailure or DeadlockDetected)
+                    return true;
+            }
+            return false;
         }
     }
 }

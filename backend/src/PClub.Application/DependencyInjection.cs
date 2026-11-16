@@ -1,5 +1,6 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using PClub.Application.Wallets;
 using PClub.Application.Bookings;
 using PClub.Application.Clubs;
 using PClub.Application.Zones;
@@ -26,6 +27,7 @@ namespace PClub.Application
                 typeof(DependencyInjection).Assembly,
                 includeInternalTypes: true);
 
+            services.AddScoped<IWalletService, WalletService>();
             return services;
         }
     }

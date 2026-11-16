@@ -1,32 +1,25 @@
-﻿
-namespace PClub.Domain.Exceptions
+namespace PClub.Domain.Exceptions;
+
+/// <summary>Не хватает средств на кошельке.</summary>
+public sealed class InsufficientFundsException : DomainException
 {
-    /// <summary>
-    /// Не хватило денег. Станет HTTP 402.
-    /// </summary>
-    public sealed class InsufficientFundsException : DomainException
+    /// <summary>Создаёт исключение.</summary>
+    /// <param name="balanceCents">Сколько есть.</param>
+    /// <param name="requiredCents">Сколько нужно.</param>
+    public InsufficientFundsException(long balanceCents, long requiredCents)
+        : base($"Недостаточно средств: на балансе {balanceCents / 100m:F2} руб., " +
+               $"требуется {requiredCents / 100m:F2} руб.")
     {
-        ///<summary>Создаёт исключение нехватки средств.</summary>
-        ///<param name="requiredCents">Сколько нужно, в копейках.</param>
-        ///<param name="availableCents">Сколько есть, в копейках.</param>
-        public InsufficientFundsException(long requiredCents, long availableCents) 
-            : base($"Требуется {requiredCents} коп., доступно {availableCents} коп.")
-        {
-            RequiredCents = requiredCents;
-            AvailableCents = availableCents;
-            ShortfallCents = requiredCents - availableCents;
-        }
-        /// <summary>
-        /// Сколько нужно, в копейках.
-        /// </summary>
-        public long RequiredCents { get; }
-        /// <summary>
-        /// Сколько есть, в копейках.
-        /// </summary>
-        public long AvailableCents { get; }
-        /// <summary>
-        /// Сколько не хватает, в копейках.
-        /// </summary>
-        public long ShortfallCents { get; }
+        BalanceCents = balanceCents;
+        RequiredCents = requiredCents;
     }
+
+    /// <summary>Сколько было на балансе.</summary>
+    public long BalanceCents { get; }
+
+    /// <summary>Сколько требовалось.</summary>
+    public long RequiredCents { get; }
+
+    /// <summary>Сколько не хватило.</summary>
+    public long ShortfallCents => RequiredCents - BalanceCents;
 }

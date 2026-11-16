@@ -1,4 +1,4 @@
-﻿namespace PClub.Domain
+namespace PClub.Domain
 {
     /// <summary>
     /// Работа с деньгами. Все суммы — целые копейки.
@@ -30,16 +30,16 @@
         /// </remarks>
         public static long ForDuration(long pricePerHourCents, TimeSpan duration)
         {
-            var minutes = (long)Math.Round(duration.TotalMinutes, MidpointRounding.AwayFromZero);
+            var minutes = duration.Ticks / (decimal)TimeSpan.TicksPerMinute;
 
             return (long)Math.Round(
-                pricePerHourCents * minutes / 60.0, MidpointRounding.AwayFromZero);
+                pricePerHourCents * minutes / 60m, MidpointRounding.AwayFromZero);
         }
 
         /// <summary>
         /// Форматирует копейки для показа человеку: 20600 даёт «206 Р».
         /// </summary>
         /// <param name="cents">Сумма в копейках.</param>
-        public static string Format(long cents) => $"{cents / CentsPerUnit} Р";
+        public static string Format(long cents) => $"{cents / (decimal)CentsPerUnit:F2} Р";
     }
 }

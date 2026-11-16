@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PClub.Application.Abstractions;
+using PClub.Application.Wallets;
+using PClub.Infrastructure.Wallets;
 using PClub.Application.Bookings;
 using PClub.Application.Clubs;
 using PClub.Infrastructure.Bookings;
@@ -56,6 +58,7 @@ namespace PClub.Infrastructure
 
             services.AddSingleton<IClock, SystemClock>();
 
+            services.AddScoped<IWalletRepository, EfWalletRepository>();
             return services;
         }
     }

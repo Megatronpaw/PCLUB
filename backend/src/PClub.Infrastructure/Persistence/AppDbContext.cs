@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PClub.Domain.Entities;
 
 namespace PClub.Infrastructure.Persistence
@@ -19,7 +19,10 @@ namespace PClub.Infrastructure.Persistence
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-        /// <summary>Пользователи</summary>
+        /// <summary>Операции по кошелькам.</summary>
+        public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
+
+        /// <summary>Пользователи.</summary>
         public DbSet<User> Users => Set<User>();
         /// <summary>Клубы.</summary>
         public DbSet<Club> Clubs => Set<Club>();

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PClub.Domain.Entities;
 
@@ -11,6 +11,7 @@ namespace PClub.Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.HasKey(u => u.Id);
+            builder.ToTable(t => t.HasCheckConstraint("users_balance_non_negative", "balance_cents >= 0"));
 
             builder.Property(u => u.Email)
                 .IsRequired()

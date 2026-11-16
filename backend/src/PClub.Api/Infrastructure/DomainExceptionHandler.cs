@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using PClub.Domain.Exceptions;
 
@@ -40,7 +40,7 @@ namespace PClub.Api.Infrastructure
 
             var (statusCode, title) = Map(domainException);
 
-           
+
             _logger.LogInformation(
                 "Отказ предметной области: {ExceptionType} → {StatusCode}. {Message}",
                 domainException.GetType().Name, statusCode, domainException.Message);
@@ -66,6 +66,7 @@ namespace PClub.Api.Infrastructure
         private static (int StatusCode, string Title) Map(DomainException exception) =>
             exception switch
             {
+                InsufficientFundsException => (StatusCodes.Status422UnprocessableEntity, "Недостаточно средств"),
                 NotFoundException => (StatusCodes.Status404NotFound, "Не найдено"),
                 ConflictException => (StatusCodes.Status409Conflict, "Конфликт"),
                 ForbiddenException => (StatusCodes.Status403Forbidden, "Запрещено"),

@@ -1,4 +1,4 @@
-﻿using PClub.Domain.Enums;
+using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Domain.Entities
@@ -8,7 +8,55 @@ namespace PClub.Domain.Entities
     /// </summary>
     public sealed class Booking
     {
-        /// <summary>Сетка продаж: только целые полчаса.</summary>
+        /// <summary>До начала брони осталось столько — возврат полный.</summary>
+        public static readonly TimeSpan FullRefundCutoff = TimeSpan.FromHours(24);
+
+        /// <summary>
+        /// Сколько вернуть при отмене.
+        /// </summary>
+        /// <param name="now">Момент отмены.</param>
+        /// <returns>
+        /// Полная стоимость, если до начала было не меньше суток; иначе половина,
+        /// округлённая в пользу клиента. Ноль, если бронь не отменена.
+        /// </returns>
+        /// <remarks>
+        /// Метод, а не свойство: результат зависит от переданного момента, а
+        /// свойство, меняющее значение от внешнего аргумента, — противоречие.
+        /// </remarks>
+        public long CalculateRefundCents(DateTimeOffset now)
+        {
+            if (Status != BookingStatus.Cancelled)
+            {
+                return 0;
+            }
+
+            var timeUntilStart = StartTime - now;
+
+            if (timeUntilStart >= FullRefundCutoff)
+            {
+                return TotalPriceCents;
+            }
+            return TotalPriceCents / 2 + TotalPriceCents % 2;
+        }
+
+        /// <summary>Сколько уже возвращено по этой брони, копейки.</summary>
+        public long RefundedCents { get; private set; }
+
+        /// <summary>Фиксирует сумму возврата.</summary>
+        /// <param name="amountCents">Возвращённая сумма.</param>
+        public void MarkRefunded(long amountCents)
+        {
+            if (Status != BookingStatus.Cancelled || RefundedCents != 0
+                || amountCents <= 0 || amountCents > TotalPriceCents)
+            {
+                throw new DomainValidationException(
+                    "Сумма возврата вне допустимых границ.");
+            }
+
+            RefundedCents = amountCents;
+        }
+
+        /// <summary>Шаг бронирования.</summary>
         public static readonly TimeSpan SlotGranularity = TimeSpan.FromMinutes(30);
 
         /// <summary>За сколько до начала ещё можно отменить.</summary>

@@ -1,4 +1,4 @@
-﻿using PClub.Domain.Entities;
+using PClub.Domain.Entities;
 using PClub.Domain.Enums;
 
 namespace PClub.Application.Bookings
@@ -25,6 +25,7 @@ namespace PClub.Application.Bookings
     /// <param name="Status">Состояние.</param>
     /// <param name="TotalPriceCents">Итого к оплате в копейках.</param>
     /// <param name="CreatedAt">Когда создана.</param>
+    /// <param name="RefundedCents">Возвращённая сумма в копейках.</param>
     public sealed record BookingDto(
         Guid Id,
         Guid UserId,
@@ -35,6 +36,7 @@ namespace PClub.Application.Bookings
         DateTimeOffset EndTime,
         BookingStatus Status,
         long TotalPriceCents,
+        long RefundedCents,
         DateTimeOffset CreatedAt)
     {
         /// <summary>Собирает DTO из сущности.</summary>
@@ -50,6 +52,7 @@ namespace PClub.Application.Bookings
             booking.EndTime,
             booking.Status,
             booking.TotalPriceCents,
+            booking.RefundedCents,
             booking.CreatedAt);
     }
 

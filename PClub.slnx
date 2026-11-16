@@ -9,4 +9,7 @@
     <Project Path="backend/src/PClub.Domain/PClub.Domain.csproj" />
     <Project Path="backend/src/PClub.Infrastructure/PClub.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/backend/tests/">
+    <Project Path="backend/tests/PClub.Tests/PClub.Tests.csproj" />
+  </Folder>
 </Solution>
