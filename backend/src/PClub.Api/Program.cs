@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+using System.Reflection;
+using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using PClub.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
+builder.Services.AddApiAuthentication(builder.Configuration);
 builder.Services.AddInfrastructure(
     builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services
@@ -30,6 +32,17 @@ builder.Services.AddSwaggerGen(options =>
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Вставь токен без слова Bearer."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
 builder.Services.AddProblemDetails(options =>
@@ -52,8 +65,11 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
-    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-    await seeder.SeedAsync();
+    if (app.Environment.IsDevelopment())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync();
+    }
 }
 
 app.UseExceptionHandler();
@@ -64,6 +80,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

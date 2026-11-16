@@ -1,4 +1,4 @@
-﻿namespace PClub.Application.Bookings
+namespace PClub.Application.Bookings
 {
     /// <summary>Операции над бронями.</summary>
     public interface IBookingService
@@ -22,14 +22,13 @@
 
         /// <summary>Отменяет бронь.</summary>
         /// <param name="bookingId">Идентификатор брони.</param>
-        /// <param name="userId">Кто отменяет.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Отменённая бронь.</returns>
         /// <exception cref="Domain.Exceptions.NotFoundException">Брони нет.</exception>
         /// <exception cref="Domain.Exceptions.ForbiddenException">Бронь чужая.</exception>
         /// <exception cref="Domain.Exceptions.ConflictException">Окно отмены закрыто.</exception>
         Task<BookingDto> CancelAsync(
-            Guid bookingId, Guid userId, CancellationToken cancellationToken = default);
+            Guid bookingId, CancellationToken cancellationToken = default);
 
         /// <summary>Занятые интервалы места на дату.</summary>
         /// <param name="seatId">Идентификатор места.</param>

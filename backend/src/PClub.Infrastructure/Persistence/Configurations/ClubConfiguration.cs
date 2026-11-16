@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PClub.Domain.Entities;
 
@@ -13,6 +13,7 @@ namespace PClub.Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<Club> builder)
         {
             builder.HasKey(c => c.Id);
+            builder.HasOne<PClub.Domain.Entities.User>().WithMany().HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Restrict);
 
             builder.Property(c => c.Name).HasMaxLength(200).IsRequired();
             builder.Property(c => c.City).HasMaxLength(100).IsRequired();

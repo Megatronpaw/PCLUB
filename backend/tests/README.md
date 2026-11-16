@@ -18,7 +18,7 @@ docker stop pclub-ch10-tests
 Только модульные проверки, без PostgreSQL:
 
 ```powershell
-dotnet test PClub.slnx --filter 'FullyQualifiedName!~PostgreSqlMoneyFlowAndConcurrency'
+dotnet test PClub.slnx --filter 'FullyQualifiedName!~PostgreSql'
 ```
 
 Проверяются точность цены, лимиты пополнения, нехватка средств, переполнение,
@@ -28,3 +28,30 @@ dotnet test PClub.slnx --filter 'FullyQualifiedName!~PostgreSqlMoneyFlowAndConcu
 откат конфликтующей брони, одновременную отмену, десять параллельных пополнений,
 сверку баланса и отсутствие возвратов по старым бесплатным броням.
 Сценарий запускается с повторами Npgsql и без них.
+
+## Глава 11
+
+Тот же `PCLUB_TEST_POSTGRES` используется тестами аутентификации. Классы PostgreSQL
+выполняются последовательно, а конкурентные запросы создаются внутри сценариев.
+
+Для HTTP-проверок нужен отдельный контейнер и база. Ключ ниже — только тестовый,
+его нельзя использовать в рабочей конфигурации.
+
+```powershell
+docker run --name pclub-ch11-tests --rm -d -e POSTGRES_DB=pclub_http_tests -e POSTGRES_USER=pclub -e POSTGRES_PASSWORD=chapter11-test-only -p 127.0.0.1:55433:5432 postgres:17-alpine
+docker exec pclub-ch11-tests pg_isready -U pclub -d pclub_http_tests
+$env:ConnectionStrings__Postgres = 'Host=localhost;Port=55433;Database=pclub_http_tests;Username=pclub;Password=chapter11-test-only'
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+$env:Jwt__SigningKey = 'test-only-key-not-used-outside-automated-tests-1234567890'
+dotnet run --project backend/src/PClub.Api --no-launch-profile --urls http://127.0.0.1:55150
+```
+
+В другом терминале из корня проекта:
+
+```powershell
+$env:PCLUB_TEST_JWT = 'test-only-key-not-used-outside-automated-tests-1234567890'
+python backend/tests/auth_http_checks.py
+```
+
+Скрипт создаёт данные исключительно в `pclub_http_tests`: пользователей, роли, клуб и место.
+После проверки остановите API и выполните `docker stop pclub-ch11-tests`.

@@ -3,6 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PClub.Application.Abstractions;
+using PClub.Application.Auth;
+using PClub.Infrastructure.Auth;
+using PClub.Infrastructure.Security;
 using PClub.Application.Wallets;
 using PClub.Infrastructure.Wallets;
 using PClub.Application.Bookings;
@@ -45,7 +48,6 @@ namespace PClub.Infrastructure
                 if (isDevelopment)
                 {
                     options
-                        .EnableSensitiveDataLogging()
                         .LogTo(Console.WriteLine, LogLevel.Information);
                 }
             });
@@ -57,6 +59,13 @@ namespace PClub.Infrastructure
             services.AddScoped<DatabaseSeeder>();
 
             services.AddSingleton<IClock, SystemClock>();
+            var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+            jwt.Validate();
+            services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+            services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+            services.AddSingleton<ITokenService, JwtTokenService>();
+            services.AddScoped<IUserRepository, EfUserRepository>();
+            services.AddScoped<IRefreshTokenRepository, EfRefreshTokenRepository>();
 
             services.AddScoped<IWalletRepository, EfWalletRepository>();
             return services;

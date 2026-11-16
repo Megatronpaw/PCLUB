@@ -25,29 +25,25 @@ public sealed class WalletController : ApiControllerBase
         Ok(await _wallets.TopUpAsync(request, cancellationToken));
 
     /// <summary>Состояние кошелька со сверкой баланса и суммы операций.</summary>
-    /// <param name="userId">Владелец.</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Состояние кошелька.</response>
     /// <response code="404">Пользователя нет.</response>
-    [HttpGet("{userId:guid}")]
+    [HttpGet]
     public async Task<ActionResult<WalletDto>> Get(
-        Guid userId, CancellationToken cancellationToken) =>
-        Ok(await _wallets.GetAsync(userId, cancellationToken));
+        CancellationToken cancellationToken) =>
+        Ok(await _wallets.GetAsync(cancellationToken));
 
     /// <summary>Выписка по кошельку, новые операции первыми.</summary>
-    /// <param name="userId">Владелец.</param>
     /// <param name="page">Номер страницы, с единицы.</param>
     /// <param name="pageSize">Размер страницы, не больше 50.</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Страница выписки.</response>
-    [HttpGet("{userId:guid}/statement")]
+    [HttpGet("statement")]
     public async Task<ActionResult<PagedResult<WalletTransactionDto>>> GetStatement(
-        Guid userId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
         Ok(await _wallets.GetStatementAsync(
-            userId,
             page < 1 ? 1 : page,
             Math.Clamp(pageSize, 1, 50),
             cancellationToken));

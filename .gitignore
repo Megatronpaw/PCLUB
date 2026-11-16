@@ -19,6 +19,7 @@ obj/
 # значениями, и вот он уже коммитится: он документирует набор ключей.
 .env
 .env.local
+appsettings.Development.json
 appsettings.*.Local.json
 
 # ───── прочее ─────

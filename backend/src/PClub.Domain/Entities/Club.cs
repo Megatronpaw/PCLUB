@@ -1,4 +1,4 @@
-﻿using PClub.Domain.Enums;
+using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Domain.Entities
@@ -16,11 +16,12 @@ namespace PClub.Domain.Entities
         /// <param name="address">Адрес.</param>
         /// <param name="openingTime">Время открытия.</param>
         /// <param name="closingTime">Время закрытия. Равно открытию — значит круглосуточно.</param>
+        /// <param name="ownerId">Владелец клуба.</param>
         /// <param name="description">Описание клуба для карточки в каталоге.</param>
         /// <exception cref="DomainValidationException">Название или город пустые.</exception>
         public Club(
             string name, string city, string address,
-            TimeOnly openingTime, TimeOnly closingTime, string description = "")
+            TimeOnly openingTime, TimeOnly closingTime, Guid ownerId, string description = "")
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -32,6 +33,7 @@ namespace PClub.Domain.Entities
                 throw new DomainValidationException("У клуба должен быть город.");
             }
 
+            AssignOwner(ownerId);
             Id = Guid.NewGuid();
             Name = name.Trim();
             City = city.Trim();
@@ -41,11 +43,20 @@ namespace PClub.Domain.Entities
             Status = ClubStatus.Draft;
             CreatedAt = DateTimeOffset.UtcNow;
             Description = description.Trim();
-            
+
         }
 
         /// <summary>Идентификатор.</summary>
         public Guid Id { get; private set; }
+        /// <summary>Владелец клуба.</summary>
+        public Guid OwnerId { get; private set; }
+        /// <summary>Назначает владельца.</summary>
+        public void AssignOwner(Guid ownerId)
+        {
+            if (ownerId == Guid.Empty) throw new DomainValidationException("Владелец обязателен.");
+            OwnerId = ownerId;
+        }
+
 
         /// <summary>Название.</summary>
         public string Name { get; private set; } = null!;

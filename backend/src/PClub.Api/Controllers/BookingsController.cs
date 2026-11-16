@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PClub.Application.Bookings;
 using PClub.Application.Clubs;
 using PClub.Domain;
@@ -13,7 +13,7 @@ namespace PClub.Api.Controllers
     {
         private readonly IClubRepository _clubs;
 
-       
+
         private readonly IBookingService _bookings;
 
         /// <summary>Создаёт контроллер.</summary>
@@ -98,7 +98,6 @@ namespace PClub.Api.Controllers
 
         /// <summary>Отменяет бронь.</summary>
         /// <param name="id">Идентификатор брони.</param>
-        /// <param name="request">Кто отменяет.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <response code="200">Бронь отменена.</response>
         /// <response code="403">Бронь принадлежит другому пользователю.</response>
@@ -107,9 +106,8 @@ namespace PClub.Api.Controllers
         [HttpPost("{id:guid}/cancel")]
         public async Task<ActionResult<BookingDto>> Cancel(
             Guid id,
-            [FromBody] CancelBookingRequest request,
             CancellationToken cancellationToken) =>
-            Ok(await _bookings.CancelAsync(id, request.UserId, cancellationToken));
+            Ok(await _bookings.CancelAsync(id, cancellationToken));
 
         /// <summary>Занятые интервалы места на дату.</summary>
         /// <param name="query">Место и дата.</param>

@@ -3,9 +3,8 @@ using PClub.Domain.Enums;
 namespace PClub.Application.Wallets;
 
 /// <summary>Запрос пополнения.</summary>
-/// <param name="UserId">Кому. До главы 11 приходит от клиента.</param>
 /// <param name="AmountCents">Сколько копеек.</param>
-public sealed record TopUpRequest(Guid UserId, long AmountCents);
+public sealed record TopUpRequest(long AmountCents);
 
 /// <summary>Состояние кошелька.</summary>
 /// <param name="UserId">Владелец.</param>

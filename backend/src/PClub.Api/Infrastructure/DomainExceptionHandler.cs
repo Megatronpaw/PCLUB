@@ -67,6 +67,7 @@ namespace PClub.Api.Infrastructure
             exception switch
             {
                 InsufficientFundsException => (StatusCodes.Status422UnprocessableEntity, "Недостаточно средств"),
+                UnauthorizedException => (StatusCodes.Status401Unauthorized, "Не авторизован"),
                 NotFoundException => (StatusCodes.Status404NotFound, "Не найдено"),
                 ConflictException => (StatusCodes.Status409Conflict, "Конфликт"),
                 ForbiddenException => (StatusCodes.Status403Forbidden, "Запрещено"),

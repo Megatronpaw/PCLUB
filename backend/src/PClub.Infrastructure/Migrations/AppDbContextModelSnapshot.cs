@@ -130,6 +130,10 @@ namespace PClub.Infrastructure.Migrations
                         .HasColumnType("time without time zone")
                         .HasColumnName("opening_time");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -139,10 +143,66 @@ namespace PClub.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_clubs");
 
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_clubs_owner_id");
+
                     b.HasIndex("Status", "City", "Name")
                         .HasDatabaseName("ix_clubs_status_city_name");
 
                     b.ToTable("clubs", (string)null);
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("family_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refresh_tokens");
+
+                    b.HasIndex("FamilyId")
+                        .HasDatabaseName("ix_refresh_tokens_family_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_refresh_tokens_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_refresh_tokens_user_id");
+
+                    b.ToTable("refresh_tokens", (string)null);
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Seat", b =>
@@ -209,6 +269,18 @@ namespace PClub.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
                         .HasColumnName("email");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("role");
 
                     b.HasKey("Id")
                         .HasName("pk_users");
@@ -327,6 +399,26 @@ namespace PClub.Infrastructure.Migrations
                         .HasConstraintName("fk_bookings_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.Club", b =>
+                {
+                    b.HasOne("PClub.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_clubs_users_owner_id");
+                });
+
+            modelBuilder.Entity("PClub.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("PClub.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_tokens_users_user_id");
                 });
 
             modelBuilder.Entity("PClub.Domain.Entities.Seat", b =>

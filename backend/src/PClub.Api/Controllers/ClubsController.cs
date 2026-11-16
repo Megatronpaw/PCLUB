@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PClub.Application.Clubs;
 using PClub.Application.Common;
 
@@ -20,6 +21,7 @@ namespace PClub.Api.Controllers
         /// <param name="query">Параметры выборки из строки запроса.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <response code="200">Список клубов.</response>
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<PagedResult<ClubListItemDto>>> Get(
             [FromQuery] ClubCatalogQuery query,
@@ -31,6 +33,7 @@ namespace PClub.Api.Controllers
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <response code="200">Клуб найден.</response>
         /// <response code="404">Клуба с таким идентификатором нет.</response>
+        [AllowAnonymous]
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ClubDto>> GetById(
             Guid id, CancellationToken cancellationToken) =>
@@ -45,6 +48,7 @@ namespace PClub.Api.Controllers
         /// <response code="200">Состояние изменено.</response>
         /// <response code="404">Клуба нет.</response>
         /// <response code="409">Публикация клуба без активных мест.</response>
+        [Authorize(Roles = "Owner,Admin")]
         [HttpPut("{id:guid}/status")]
         public async Task<ActionResult<ClubDto>> ChangeStatus(
             Guid id,

@@ -11,14 +11,16 @@ public sealed class WalletService : IWalletService
 {
     private readonly IWalletRepository _wallets;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
     /// <summary>Создаёт сервис.</summary>
     public WalletService(
-        IWalletRepository wallets, IUnitOfWork unitOfWork, IClock clock)
+        IWalletRepository wallets, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock)
     {
         _wallets = wallets;
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
         _clock = clock;
     }
 
@@ -29,8 +31,8 @@ public sealed class WalletService : IWalletService
             token => TopUpCoreAsync(request, token), cancellationToken);
 
     /// <inheritdoc />
-    public Task<WalletDto> GetAsync(Guid userId, CancellationToken cancellationToken = default) =>
-        _unitOfWork.ExecuteInTransactionAsync(token => GetCoreAsync(userId, token), cancellationToken);
+    public Task<WalletDto> GetAsync(CancellationToken cancellationToken = default) =>
+        _unitOfWork.ExecuteInTransactionAsync(token => GetCoreAsync(_currentUser.RequireUserId(), token), cancellationToken);
 
     private async Task<WalletDto> GetCoreAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -48,16 +50,16 @@ public sealed class WalletService : IWalletService
 
     /// <inheritdoc />
     public Task<PagedResult<WalletTransactionDto>> GetStatementAsync(
-        Guid userId, int page, int pageSize,
+        int page, int pageSize,
         CancellationToken cancellationToken = default) =>
-        _wallets.GetStatementAsync(userId, page, pageSize, cancellationToken);
+        _wallets.GetStatementAsync(_currentUser.RequireUserId(), page, pageSize, cancellationToken);
 
     /// <summary>Пополнение внутри транзакции.</summary>
     private async Task<WalletDto> TopUpCoreAsync(
         TopUpRequest request, CancellationToken cancellationToken)
     {
-        var user = await _wallets.GetTrackedUserAsync(request.UserId, cancellationToken)
-            ?? throw new NotFoundException("User", request.UserId);
+        var user = await _wallets.GetTrackedUserAsync(_currentUser.RequireUserId(), cancellationToken)
+            ?? throw new NotFoundException("User", _currentUser.RequireUserId());
         var validation = new TopUpRequestValidator().Validate(request);
         if (!validation.IsValid)
             throw new DomainValidationException(string.Join(" ", validation.Errors.Select(e => e.ErrorMessage)));

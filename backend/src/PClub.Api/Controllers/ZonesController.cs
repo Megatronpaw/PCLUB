@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PClub.Application.Clubs;
 using PClub.Application.Zones;
 
@@ -26,6 +27,7 @@ namespace PClub.Api.Controllers
         /// <response code="200">Ставка изменена.</response>
         /// <response code="400">Ставка не положительная.</response>
         /// <response code="404">Зоны с таким идентификатором нет.</response>
+        [Authorize(Roles = "Owner,Admin")]
         [HttpPut("{id:guid}/price")]
         public async Task<ActionResult<ZoneDto>> ChangePrice(
             Guid id,

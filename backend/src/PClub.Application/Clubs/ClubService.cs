@@ -1,4 +1,4 @@
-﻿using PClub.Application.Abstractions;
+using PClub.Application.Abstractions;
 using PClub.Application.Common;
 using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
@@ -12,14 +12,16 @@ namespace PClub.Application.Clubs
     {
         private readonly IClubRepository _clubs;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUser _currentUser;
 
         /// <summary>
         /// Создаёт сервис.
         /// </summary>
-        public ClubService(IClubRepository clubs, IUnitOfWork unitOfWork)
+        public ClubService(IClubRepository clubs, IUnitOfWork unitOfWork, ICurrentUser currentUser)
         {
             _clubs = clubs;
             _unitOfWork = unitOfWork;
+            _currentUser = currentUser;
         }
 
         ///<inheritdoc/>
@@ -47,6 +49,11 @@ namespace PClub.Application.Clubs
         {
             var club = await _clubs.GetTrackedAsync(id, cancellationToken)
                 ?? throw new NotFoundException("Club", id);
+
+            _currentUser.RequireUserId();
+            if (_currentUser.Role != UserRole.Admin
+                && (_currentUser.Role != UserRole.Owner || club.OwnerId != _currentUser.UserId))
+                throw new ForbiddenException("Вы не владелец этого клуба.");
 
             var hasBookableSeats = club.Zones.Any(z => z.ActiveSeatsCount > 0);
 

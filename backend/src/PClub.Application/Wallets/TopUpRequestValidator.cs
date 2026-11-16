@@ -12,7 +12,6 @@ public sealed class TopUpRequestValidator : AbstractValidator<TopUpRequest>
     /// <summary>Задаёт правила.</summary>
     public TopUpRequestValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty().WithMessage("Пользователь обязателен.");
 
         RuleFor(x => x.AmountCents)
             .GreaterThanOrEqualTo(MinTopUpCents)

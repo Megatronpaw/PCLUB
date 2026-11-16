@@ -4,12 +4,10 @@ using PClub.Domain.Enums;
 namespace PClub.Application.Bookings
 {
     /// <summary>Запрос создания брони.</summary>
-    /// <param name="UserId">Кто бронирует.</param>
     /// <param name="SeatId">Какое место.</param>
     /// <param name="StartTime">Начало.</param>
     /// <param name="EndTime">Окончание, в интервал не включается.</param>
     public sealed record CreateBookingRequest(
-        Guid UserId,
         Guid SeatId,
         DateTimeOffset StartTime,
         DateTimeOffset EndTime);
@@ -76,7 +74,4 @@ namespace PClub.Application.Bookings
         TimeOnly ClosingTime,
         IReadOnlyList<BusyIntervalDto> Busy);
 
-    /// <summary>Запрос отмены брони.</summary>
-    /// <param name="UserId">Кто отменяет. До главы 11 приходит от клиента.</param>
-    public sealed record CancelBookingRequest(Guid UserId);
 }

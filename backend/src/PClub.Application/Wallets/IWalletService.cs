@@ -13,9 +13,9 @@ public interface IWalletService
 
     /// <summary>Состояние кошелька со сверкой.</summary>
     /// <exception cref="Domain.Exceptions.NotFoundException">Пользователя нет.</exception>
-    Task<WalletDto> GetAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<WalletDto> GetAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Страница выписки.</summary>
     Task<PagedResult<WalletTransactionDto>> GetStatementAsync(
-        Guid userId, int page, int pageSize, CancellationToken cancellationToken = default);
+        int page, int pageSize, CancellationToken cancellationToken = default);
 }

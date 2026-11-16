@@ -22,6 +22,8 @@ namespace PClub.Infrastructure.Persistence
         /// <summary>Операции по кошелькам.</summary>
         public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
 
+        /// <summary>Токены обновления.</summary>
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         /// <summary>Пользователи.</summary>
         public DbSet<User> Users => Set<User>();
         /// <summary>Клубы.</summary>

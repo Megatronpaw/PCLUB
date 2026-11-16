@@ -1,8 +1,13 @@
-﻿<Project>
+<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
+  <ItemGroup Label="Authentication">
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+  </ItemGroup>
   <ItemGroup Label="ASP.NET и Swagger">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />

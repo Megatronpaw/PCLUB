@@ -15,6 +15,7 @@ using Xunit;
 
 namespace PClub.Tests;
 
+[Collection("PostgreSQL")]
 public sealed class WalletTests
 {
     private static readonly DateTimeOffset Now = new(2030, 1, 1, 10, 0, 0, TimeSpan.Zero);
@@ -56,7 +57,7 @@ public sealed class WalletTests
     [Fact]
     public void WalletRejectsInvalidDebitsAndOverflowWithoutChangingBalance()
     {
-        var user = new User("test@example.com", "Test");
+        var user = new User("test@example.com", "Test", "disabled-test-hash");
         user.Credit(1000);
         var error = Assert.Throws<InsufficientFundsException>(() => user.Debit(1001));
         Assert.Equal(1, error.ShortfallCents);
@@ -74,12 +75,12 @@ public sealed class WalletTests
     [InlineData(10000000, true)]
     [InlineData(10000001, false)]
     public void TopUpLimits(long amount, bool valid) => Assert.Equal(valid,
-        new TopUpRequestValidator().Validate(new TopUpRequest(Guid.NewGuid(), amount)).IsValid);
+        new TopUpRequestValidator().Validate(new TopUpRequest(amount)).IsValid);
 
     [Fact]
     public void RefundCanExceedTopUpLimit()
     {
-        var user = new User("test@example.com", "Test");
+        var user = new User("test@example.com", "Test", "disabled-test-hash");
         Assert.Equal(User.MaxTopUpCents + 1, user.Credit(User.MaxTopUpCents + 1));
     }
 
@@ -111,8 +112,8 @@ public sealed class WalletTests
             .UseSnakeCaseNamingConvention().Options;
         await using var setup = new AppDbContext(options);
         await setup.Database.MigrateAsync();
-        var user = new User($"{Guid.NewGuid()}@example.com", "Wallet test");
-        var club = new Club("Test", "Test", "Test", new TimeOnly(0), new TimeOnly(0));
+        var user = new User($"{Guid.NewGuid()}@example.com", "Wallet test", "disabled-test-hash");
+        var club = new Club("Test", "Test", "Test", new TimeOnly(0), new TimeOnly(0), user.Id);
         var zone = new Zone("Test", 2001);
         var seat = new Seat("Test");
         zone.AddSeat(seat);
@@ -127,42 +128,49 @@ public sealed class WalletTests
             var clock = new FixedClock();
             var uow = new UnitOfWork(db, NullLogger<UnitOfWork>.Instance);
             var wallets = new EfWalletRepository(db);
-            return await operation(new WalletService(wallets, uow, clock),
+            return await operation(new WalletService(wallets, uow, new TestCurrentUser(user.Id), clock),
                 new BookingService(new EfBookingRepository(db), new EfClubRepository(db, clock),
-                    uow, clock, wallets), db);
+                    uow, new TestCurrentUser(user.Id), clock, wallets), db);
         }
 
-        CreateBookingRequest Request(int hours) => new(user.Id, seat.Id, Now.AddHours(hours), Now.AddHours(hours + 1));
+        CreateBookingRequest Request(int hours) => new(seat.Id, Now.AddHours(hours), Now.AddHours(hours + 1));
         await Assert.ThrowsAsync<InsufficientFundsException>(() => Run((w, b, db) => b.CreateAsync(Request(48))));
         Assert.Equal(0, await setup.Bookings.CountAsync(b => b.UserId == user.Id));
-        await Run((w, b, db) => w.TopUpAsync(new(user.Id, 100000)));
+        await Run((w, b, db) => w.TopUpAsync(new(100000)));
         var full = await Run((w, b, db) => b.CreateAsync(Request(48)));
         await Assert.ThrowsAsync<ConflictException>(() => Run((w, b, db) => b.CreateAsync(Request(48))));
-        var cancelled = await Run((w, b, db) => b.CancelAsync(full.Id, user.Id));
+        var cancelled = await Run((w, b, db) => b.CancelAsync(full.Id));
         Assert.Equal(2001, cancelled.RefundedCents);
-        await Assert.ThrowsAsync<ConflictException>(() => Run((w, b, db) => b.CancelAsync(full.Id, user.Id)));
+        await Assert.ThrowsAsync<ConflictException>(() => Run((w, b, db) => b.CancelAsync(full.Id)));
         var half = await Run((w, b, db) => b.CreateAsync(Request(3)));
         var refunds = await Task.WhenAll(Enumerable.Range(0, 2).Select(async _ =>
         {
-            try { await Run((w, b, db) => b.CancelAsync(half.Id, user.Id)); return true; }
+            try { await Run((w, b, db) => b.CancelAsync(half.Id)); return true; }
             catch (ConflictException) { return false; }
         }));
         Assert.Single(refunds, x => x);
         Assert.Equal(1001, (await Run((w, b, db) => b.GetByIdAsync(half.Id))).RefundedCents);
         var late = await Run((w, b, db) => b.CreateAsync(Request(1)));
-        await Assert.ThrowsAsync<ConflictException>(() => Run((w, b, db) => b.CancelAsync(late.Id, user.Id)));
-        await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => Run((w, b, db) => w.TopUpAsync(new(user.Id, 1000)))));
-        var balance = await Run((w, b, db) => w.GetAsync(user.Id));
+        await Assert.ThrowsAsync<ConflictException>(() => Run((w, b, db) => b.CancelAsync(late.Id)));
+        await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => Run((w, b, db) => w.TopUpAsync(new(1000)))));
+        var balance = await Run((w, b, db) => w.GetAsync());
         Assert.True(balance.IsConsistent);
         Assert.Equal(106999, balance.BalanceCents);
-        Assert.Equal(16, (await Run((w, b, db) => w.GetStatementAsync(user.Id, 1, 50))).TotalCount);
+        Assert.Equal(16, (await Run((w, b, db) => w.GetStatementAsync(1, 50))).TotalCount);
 
         var legacy = new Booking(user.Id, club.Id, zone.Id, seat.Id, Now.AddHours(72), Now.AddHours(73), 2001, Now);
         setup.Add(legacy);
         await setup.SaveChangesAsync();
-        Assert.Equal(0, (await Run((w, b, db) => b.CancelAsync(legacy.Id, user.Id))).RefundedCents);
-        Assert.Equal(balance.BalanceCents, (await Run((w, b, db) => w.GetAsync(user.Id))).BalanceCents);
+        Assert.Equal(0, (await Run((w, b, db) => b.CancelAsync(legacy.Id))).RefundedCents);
+        Assert.Equal(balance.BalanceCents, (await Run((w, b, db) => w.GetAsync())).BalanceCents);
     }
 
+    private sealed class TestCurrentUser(Guid id) : ICurrentUser
+    {
+        public Guid? UserId => id;
+        public UserRole? Role => UserRole.User;
+        public bool IsAuthenticated => true;
+        public Guid RequireUserId() => id;
+    }
     private sealed class FixedClock : IClock { public DateTimeOffset UtcNow => Now; }
 }

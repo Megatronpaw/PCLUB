@@ -24,4 +24,5 @@
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 
+  <ItemGroup><PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" /></ItemGroup>
 </Project>

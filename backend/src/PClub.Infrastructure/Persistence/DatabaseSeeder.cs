@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using PClub.Application.Abstractions;
 using PClub.Domain.Entities;
 using PClub.Domain.Enums;
 
@@ -41,7 +42,13 @@ namespace PClub.Infrastructure.Persistence
 
         /// <summary>Создаёт сидер.</summary>
         /// <param name="db">Контекст базы.</param>
-        public DatabaseSeeder(AppDbContext db) => _db = db;
+        /// <param name="passwordHasher">Хеширование демо-паролей.</param>
+        public DatabaseSeeder(AppDbContext db, IPasswordHasher passwordHasher)
+        {
+            _db = db;
+            _passwordHasher = passwordHasher;
+        }
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// Заполняет базу, если она пуста.
@@ -54,14 +61,29 @@ namespace PClub.Infrastructure.Persistence
         /// </remarks>
         public async Task SeedAsync(CancellationToken cancellationToken = default)
         {
-            if (!await _db.Users.AnyAsync(cancellationToken))
+            var demos = new[]
             {
-                _db.Users.AddRange(
-                    new User("ivan@example.com", "Иван Петров"),
-                    new User("maria@example.com", "Мария Сидорова"));
-
-                await _db.SaveChangesAsync(cancellationToken);
+                ("ivan@example.com", "Иван Петров", UserRole.User),
+                ("maria@example.com", "Мария Сидорова", UserRole.User),
+                ("owner@example.com", "Ольга Клубова", UserRole.Owner),
+                ("admin@example.com", "Админ", UserRole.Admin)
+            };
+            foreach (var (email, name, role) in demos)
+            {
+                var existing = await _db.Users.SingleOrDefaultAsync(u => u.Email == email, cancellationToken);
+                if (existing is null)
+                    _db.Users.Add(new User(email, name, _passwordHasher.Hash("Password123!"), role));
+                else if (string.IsNullOrEmpty(existing.PasswordHash) && role == UserRole.User)
+                    existing.ChangePasswordHash(_passwordHasher.Hash("Password123!"));
             }
+            await _db.SaveChangesAsync(cancellationToken);
+            var owner = await _db.Users.SingleAsync(u => u.Email == "owner@example.com", cancellationToken);
+            if (owner.Role != UserRole.Owner)
+                throw new InvalidOperationException("Демо-почта владельца занята пользователем без роли Owner.");
+            var legacyOwner = Guid.Parse("00000000-0000-0000-0000-000000000011");
+            var legacyClubs = await _db.Clubs.Where(c => c.OwnerId == legacyOwner).ToListAsync(cancellationToken);
+            foreach (var legacyClub in legacyClubs) legacyClub.AssignOwner(owner.Id);
+            await _db.SaveChangesAsync(cancellationToken);
 
             if (await _db.Clubs.AnyAsync(cancellationToken))
             {
@@ -76,6 +98,7 @@ namespace PClub.Infrastructure.Persistence
                     address: $"ул. {suffix}, 1",
                     openingTime: new TimeOnly(10, 0),
                     closingTime: new TimeOnly(23, 0),
+                    ownerId: owner.Id,
                     description: description);
 
                 var standard = new Zone("Стандарт", basePrice);

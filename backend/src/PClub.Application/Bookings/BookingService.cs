@@ -13,24 +13,27 @@ namespace PClub.Application.Bookings
         private readonly IBookingRepository _bookings;
         private readonly IClubRepository _clubs;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUser _currentUser;
         private readonly IClock _clock;
         private readonly IWalletRepository _wallets;
 
         /// <summary>Создаёт сервис.</summary>
         /// <param name="bookings">Доступ к броням.</param>
         /// <param name="clubs">Доступ к клубам.</param>
+        /// <param name="currentUser">Текущий пользователь.</param>
         /// <param name="unitOfWork">Сохранение изменений и транзакции.</param>
         /// <param name="wallets">Кошельки и журнал операций.</param>
         /// <param name="clock">Текущее время.</param>
         public BookingService(
             IBookingRepository bookings,
             IClubRepository clubs,
-            IUnitOfWork unitOfWork,
+            IUnitOfWork unitOfWork, ICurrentUser currentUser,
             IClock clock, IWalletRepository wallets)
         {
             _bookings = bookings;
             _clubs = clubs;
             _unitOfWork = unitOfWork;
+            _currentUser = currentUser;
             _clock = clock;
             _wallets = wallets;
         }
@@ -48,23 +51,24 @@ namespace PClub.Application.Bookings
             var booking = await _bookings.GetTrackedAsync(id, cancellationToken)
                 ?? throw new NotFoundException("Booking", id);
 
+            if (booking.UserId != _currentUser.RequireUserId()) throw new ForbiddenException("Это не ваша бронь.");
             return BookingDto.From(booking);
         }
 
         /// <inheritdoc />
         public Task<BookingDto> CancelAsync(
-            Guid bookingId, Guid userId, CancellationToken cancellationToken = default) =>
+            Guid bookingId, CancellationToken cancellationToken = default) =>
             _unitOfWork.ExecuteInTransactionAsync(
-                token => CancelCoreAsync(bookingId, userId, token), cancellationToken);
+                token => CancelCoreAsync(bookingId, token), cancellationToken);
 
         /// <summary>Отмена внутри транзакции.</summary>
         private async Task<BookingDto> CancelCoreAsync(
-            Guid bookingId, Guid userId, CancellationToken cancellationToken)
+            Guid bookingId, CancellationToken cancellationToken)
         {
             var booking = await _bookings.GetTrackedAsync(bookingId, cancellationToken)
                 ?? throw new NotFoundException("Booking", bookingId);
 
-            if (booking.UserId != userId)
+            if (booking.UserId != _currentUser.RequireUserId())
             {
                 throw new ForbiddenException("Это не ваша бронь.");
             }
@@ -76,8 +80,8 @@ namespace PClub.Application.Bookings
 
             if (refundCents > 0)
             {
-                var user = await _wallets.GetTrackedUserAsync(userId, cancellationToken)
-                    ?? throw new NotFoundException("User", userId);
+                var user = await _wallets.GetTrackedUserAsync(booking.UserId, cancellationToken)
+                    ?? throw new NotFoundException("User", booking.UserId);
 
                 var balanceAfter = user.Credit(refundCents);
 
@@ -98,7 +102,6 @@ namespace PClub.Application.Bookings
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-
             return BookingDto.From(booking);
         }
 
@@ -166,7 +169,7 @@ namespace PClub.Application.Bookings
             }
 
             var booking = new Booking(
-                userId: request.UserId,
+                userId: _currentUser.RequireUserId(),
                 clubId: club.Id,
                 zoneId: zone.Id,
                 seatId: seat.Id,
@@ -175,8 +178,8 @@ namespace PClub.Application.Bookings
                 pricePerHourCents: zone.PricePerHourCents,
                 now: _clock.UtcNow);
 
-            var user = await _wallets.GetTrackedUserAsync(request.UserId, cancellationToken)
-                ?? throw new NotFoundException("User", request.UserId);
+            var user = await _wallets.GetTrackedUserAsync(_currentUser.RequireUserId(), cancellationToken)
+                ?? throw new NotFoundException("User", _currentUser.RequireUserId());
             var balanceAfter = user.Debit(booking.TotalPriceCents);
 
             _bookings.Add(booking);
@@ -193,6 +196,7 @@ namespace PClub.Application.Bookings
 
 
 
+            if (booking.UserId != _currentUser.RequireUserId()) throw new ForbiddenException("Это не ваша бронь.");
             return BookingDto.From(booking);
         }
     }

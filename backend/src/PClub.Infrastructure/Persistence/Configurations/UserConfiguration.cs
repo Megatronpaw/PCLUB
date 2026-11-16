@@ -11,6 +11,8 @@ namespace PClub.Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.HasKey(u => u.Id);
+            builder.Property(u => u.PasswordHash).IsRequired().HasMaxLength(512);
+            builder.Property(u => u.Role).HasConversion<string>().HasMaxLength(32);
             builder.ToTable(t => t.HasCheckConstraint("users_balance_non_negative", "balance_cents >= 0"));
 
             builder.Property(u => u.Email)

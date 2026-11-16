@@ -1,3 +1,4 @@
+using PClub.Domain.Enums;
 using PClub.Domain.Exceptions;
 
 namespace PClub.Domain.Entities
@@ -60,9 +61,11 @@ namespace PClub.Domain.Entities
 
         /// <summary>Создаёт пользователя.</summary>
         /// <param name="email">Адрес почты.</param>
+        /// <param name="passwordHash">Хеш пароля.</param>
+        /// <param name="role">Роль.</param>
         /// <param name="displayName">Отображаемое имя.</param>
         /// <exception cref="DomainValidationException">Данные не прошли проверку.</exception>
-        public User(string email, string displayName)
+        public User(string email, string displayName, string passwordHash, UserRole role = UserRole.User)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -80,6 +83,9 @@ namespace PClub.Domain.Entities
                     $"Имя длиннее {MaxDisplayNameLength} символов.");
             }
 
+            ChangePasswordHash(passwordHash);
+            if (!Enum.IsDefined(role)) throw new DomainValidationException("Неизвестная роль.");
+            Role = role;
             Id = Guid.NewGuid();
 
             Email = email.Trim().ToLowerInvariant();
@@ -90,12 +96,32 @@ namespace PClub.Domain.Entities
         /// <summary>Для EF Core.</summary>
         private User()
         {
+            PasswordHash = null!;
             Email = null!;
             DisplayName = null!;
         }
 
         /// <summary>Идентификатор.</summary>
         public Guid Id { get; private set; }
+
+        /// <summary>Хеш пароля вместе с солью и параметрами.</summary>
+        public string PasswordHash { get; private set; } = null!;
+
+        /// <summary>Роль.</summary>
+        public UserRole Role { get; private set; }
+
+        /// <summary>Заменяет хеш пароля.</summary>
+        /// <param name="newPasswordHash">Новый готовый хеш.</param>
+        public void ChangePasswordHash(string newPasswordHash)
+        {
+            if (string.IsNullOrWhiteSpace(newPasswordHash))
+            {
+                throw new DomainValidationException("Хеш пароля обязателен.");
+            }
+
+            PasswordHash = newPasswordHash;
+        }
+
 
         /// <summary>Адрес почты в нижнем регистре.</summary>
         public string Email { get; private set; }

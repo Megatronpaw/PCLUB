@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using PClub.Application.Abstractions;
 using PClub.Domain.Entities;
 
@@ -15,7 +15,6 @@ namespace PClub.Application.Bookings
         /// <param name="clock">Часы: нужны для правила «не в прошлом».</param>
         public CreateBookingRequestValidator(IClock clock)
         {
-            RuleFor(x => x.UserId).NotEmpty().WithMessage("Пользователь обязателен.");
             RuleFor(x => x.SeatId).NotEmpty().WithMessage("Место обязательно.");
 
             RuleFor(x => x.StartTime)

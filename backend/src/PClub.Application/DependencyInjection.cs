@@ -1,3 +1,4 @@
+using PClub.Application.Auth;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using PClub.Application.Wallets;
@@ -28,6 +29,7 @@ namespace PClub.Application
                 includeInternalTypes: true);
 
             services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IAuthService, AuthService>();
             return services;
         }
     }
